@@ -11,10 +11,10 @@ LSun = 3.826e33
 RSun = 696340e5
 current_age_sun = 4.603e3 | units.Myr
 
-# evolving_age = 12e3 | units.Myr
+evolving_age = 12e3 | units.Myr
 
 # This is a testing age because 12 Gyr takes a long time
-evolving_age = 6e3 | units.Myr
+# evolving_age = 6e3 | units.Myr
 
 stellar = MESA()
 
@@ -51,6 +51,8 @@ while stellar.particles[0].age <= evolving_age:
     
 print(stellar.particles[0])
 
+write_set_to_file(stellar.particles, "stellar_evolution_sun.amuse", "amuse", append_to_file=False)
+
 stellar.stop()
 
 time_evolution = np.array(time_evolution)
@@ -59,10 +61,11 @@ radius_evolution = np.array(radius_evolution)
 temperature_evolution = np.array(temperature_evolution)
 mass_evolution = np.array(mass_evolution)
 
-plt.plot(time_evolution / 1000, luminosity_evolution / LSun, label="luminosity")
-plt.plot(time_evolution / 1000, radius_evolution / RSun, label="radius")
-plt.plot(time_evolution / 1000, temperature_evolution / TSun, label="temperature")
-plt.plot(time_evolution / 1000, mass_evolution / units.MSun.value_in(units.MSun), label="mass")
-plt.xlabel("Time [Gyr]")
-plt.legend(loc="upper left")
-plt.show()
+# plt.plot(time_evolution / 1000, luminosity_evolution / LSun, label="luminosity")
+# plt.plot(time_evolution / 1000, radius_evolution / RSun, label="radius")
+# plt.plot(time_evolution / 1000, temperature_evolution / TSun, label="temperature")
+# plt.plot(time_evolution / 1000, mass_evolution / units.MSun.value_in(units.MSun), label="mass")
+# plt.xlabel("Time [Gyr]")
+# plt.ylabel("Ratio with current Sun")
+# plt.legend(loc="upper left")
+# plt.show()
