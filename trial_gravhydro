@@ -27,7 +27,7 @@ earth.velocity = np.array((0.0,29780,0.0)) | units.ms
 
 # Moon
 moon = system[1]
-moon.name = "Moon"
+moon.name = "moon"
 moon.mass = units.kg(7.342e22)
 moon.radius = units.km(1737.4)
 moon.position = units.km(np.array((149.5e6 + 384399,0.0,0.0)))
