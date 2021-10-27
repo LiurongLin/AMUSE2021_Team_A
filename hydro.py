@@ -11,10 +11,10 @@ from tqdm import tqdm
 import sys
 
 z = 0.0134
-RSun = 696340e5
-
+RSun = 696340e5 #cm
+RRoche = 0.9*1.5e11 | units.m
 evolving_age = 12e3 | units.Myr
-# evolving_age = 4e3 | units.Myr
+# evolving_age = 1e3 | units.Myr
 
 stellar = MESA()
 
@@ -25,13 +25,25 @@ stellar.particles.add_particle(sun)
 stellar.parameters.metallicity = z
 
 evol_sun = stellar.particles[0]
+iterations = 0
 
-while evol_sun.age <= evolving_age:
-    
-    print(evol_sun.age.in_(units.Myr))
-    
+while evol_sun.radius <= RRoche or (evol_sun.age > evolving_age and old_radius > evol_sun.radius):
+# while evol_sun.age <= evolving_age:
+    # print(evol_sun.age.in_(units.Myr))
+
     stellar.evolve_model()
-    
+
+    old_radius = evol_sun.radius
+    iterations += 1
+
+    if iterations == 100:
+        iterations = 0
+        print("Radius sun=", evol_sun.radius.in_(units.RSun))
+        print("Evolving age=", evol_sun.age.in_(units.Myr))    
+
+
+print("Evolving age=", evol_sun.age.in_(units.Myr))    
+
 target_core_mass = evol_sun.core_mass
 part_of_smaller_mass = 0.25
 N_h = (evol_sun.mass - target_core_mass) / (part_of_smaller_mass * (1 | units.MEarth))
