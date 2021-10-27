@@ -1,3 +1,4 @@
+
 from amuse.lab import *
 from amuse.units import (units, constants)
 from amuse.couple import bridge
@@ -66,17 +67,14 @@ gravity_hydro.add_system(gravity, (hydro,))
 gravity_hydro.add_system(hydro, (gravity,))
 gravity_hydro.timestep = 1e-2 | units.yr
 
-model_time = 0 | units.yr
+
 t_end = 1 | units.yr
 
-while model_time < t_end:
-    model_time += gravity_hydro.timestep
-    #print(model_time)
-    gravity_hydro.evolve_model(model_time)
-    
-    channel["to_planets"].copy()
-    channel["to_gas"].copy()
-    channel["to_core"].copy()
+gravity_hydro.evolve_model(t_end)
+
+channel["to_planets"].copy()
+channel["to_gas"].copy()
+channel["to_core"].copy()
     # channel["from system"].copy()
     # channel["to_system"].copy()
 
@@ -92,3 +90,5 @@ hydro.stop()
 # plt.xlabel("x [RSun]")
 # plt.ylabel("y [RSun]")
 # plt.show()
+
+
