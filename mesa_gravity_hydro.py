@@ -1,0 +1,143 @@
+from amuse.lab import *
+from amuse.units import (units, constants)
+from amuse.couple import bridge
+import matplotlib.pyplot as plt
+import matplotlib.patches as patch
+import numpy as np
+from tqdm import tqdm
+import sys
+import timeit
+
+# If you want to quickly check if it works: uncomment line 22 & 59 and comment line 21 & 58
+# Also remember that if you ran it one time, that you delete the "mesa_gravity_hydro.amuse" file
+# because otherwise you will get an error (because it cannot overwrite the file).
+
+# start run time
+start = timeit.default_timer()
+
+z = 0.0134
+RSun = 696340e5 #cm
+RRoche = 0.9*1.5e11 | units.m
+evolving_age = 12e3 | units.Myr
+# evolving_age = 1e3 | units.Myr
+n = 5
+
+sun = Particles(1)
+sun.mass = 1 | units.MSun
+
+system = Particles(2)
+
+# Earth
+earth = system[0]
+earth.name = "Earth"
+earth.mass = units.MEarth(1)
+earth.radius = units.REarth(1) 
+earth.position = np.array((1,0.0,0.0)) | units.au
+earth.velocity = np.array((0.0,29780,0.0)) | units.ms
+
+# Moon
+moon = system[1]
+moon.name = "Moon"
+moon.mass = units.kg(7.342e22)
+moon.radius = units.km(1737.4)
+moon.position = units.km(np.array((149.5e6 + 384399,0.0,0.0)))
+moon.velocity = ([0.0,1.022,0] | units.km/units.s) + earth.velocity   
+
+converter_gravity = nbody_system.nbody_to_si(system.mass.sum(), earth.position.length())
+gravity = Huayno(converter_gravity)
+gravity.particles.add_particles(system)
+gravity.parameters.timestep = 0.1 | units.yr
+
+stellar = MESA()
+stellar.particles.add_particle(sun)
+stellar.parameters.metallicity = z
+
+evol_sun = stellar.particles[0]
+iterations = 0
+
+while evol_sun.radius <= RRoche or (evol_sun.age > evolving_age and old_radius > evol_sun.radius):
+# while evol_sun.age <= evolving_age:
+    # print(evol_sun.age.in_(units.Myr))
+
+    stellar.evolve_model()
+
+    old_radius = evol_sun.radius
+    iterations += 1
+
+    if iterations == 100:
+        iterations = 0
+        print("Radius sun=", evol_sun.radius.in_(units.RSun))
+        print("Evolving age=", evol_sun.age.in_(units.Myr))    
+
+print("Evolving age=", evol_sun.age.in_(units.Myr))    
+
+target_core_mass = evol_sun.core_mass
+part_of_smaller_mass = 0.25
+N_h = (evol_sun.mass - target_core_mass) / (part_of_smaller_mass * (1 | units.MEarth))
+
+sph_model = convert_stellar_model_to_SPH(evol_sun,
+                                         round(N_h),
+                                         with_core_particle = True,
+                                         target_core_mass = 0.8 * evol_sun.mass,
+                                         do_store_composition = False,
+                                         base_grid_options=dict(type="fcc"))
+
+core = sph_model.core_particle.as_set()
+gas = sph_model.gas_particles
+
+print("Ngas=", len(gas), "Ncore=", core)
+print("RCore=", core.radius.value_in(units.m)[0])
+
+for i in range(n):
+
+    converter_hydro = nbody_system.nbody_to_si(gas.mass.sum(), gas[-1].position.length())
+    hydro = Fi(converter_hydro, mode="openmp")#, redirection="none")
+    hydro.dm_particles.add_particle(core)
+    hydro.gas_particles.add_particles(gas)
+    # hydro.parameters.timestep = 1e-3 | units.yr
+
+    gravity_hydro = bridge.Bridge()#use_threading=False)
+    gravity_hydro.add_system(gravity, (hydro,))
+    gravity_hydro.timestep = 0.5 * gravity.parameters.timestep
+    # gravity_hydro.timestep = 1e-3 | units.yr
+    print("Gravity_hydro timestep =", gravity_hydro.timestep)
+
+    t_end = 1 | units.yr
+    model_time = 0 | units.yr
+    time = np.arange(model_time.value_in(units.yr), t_end.value_in(units.yr), gravity_hydro.timestep.value_in(units.yr)) | units.yr
+    for t in tqdm(time, desc="gravity_hydro"):
+        gravity_hydro.evolve_model(t)
+    
+    stellar.evolve_model(t_end)
+
+    if i == n-1:
+        write_set_to_file(gravity_hydro.particles, "mesa_gravity_hydro.amuse", "amuse", append_to_file=False)
+    
+    hydro.stop()
+
+    sph_model = convert_stellar_model_to_SPH(evol_sun,
+                                            round(N_h),
+                                            with_core_particle = True,
+                                            target_core_mass = 0.8 * evol_sun.mass,
+                                            do_store_composition = False,
+                                            base_grid_options=dict(type="fcc"))
+
+    core = sph_model.core_particle.as_set()
+    gas = sph_model.gas_particles
+
+
+plt.scatter(np.array(gas.x.value_in(units.cm)) / RSun, np.array(gas.y.value_in(units.cm)) / RSun)
+plt.scatter(np.array(core.x.value_in(units.cm)) / RSun, np.array(core.y.value_in(units.cm)) / RSun, label="Sun")
+plt.scatter(gravity.particles[0].x.value_in(units.cm) / RSun, gravity.particles[0].y.value_in(units.cm) / RSun, label="Earth")
+plt.scatter(gravity.particles[1].x.value_in(units.cm) / RSun, gravity.particles[1].y.value_in(units.cm) / RSun, label="Moon")
+plt.xlabel("x [RSun]")
+plt.ylabel("y [RSun]")
+plt.legend(loc="upper left")
+plt.show()
+
+stellar.stop()
+gravity.stop()
+
+# stop and print run time
+stop = timeit.default_timer()
+print("Time:", stop-start)
