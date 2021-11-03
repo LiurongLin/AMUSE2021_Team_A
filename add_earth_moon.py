@@ -6,11 +6,15 @@ import matplotlib.patches as patch
 import numpy as np
 from tqdm import tqdm
 import sys
+import timeit
+
+# start run time
+start = timeit.default_timer()
 
 RSun = 696340e5
 
 core = read_set_from_file("core_particle.amuse", "amuse", append_to_file=False)
-gas = read_set_from_file("gas_particles.amuse", "amuse", append_to_file=False)[-100:]
+gas = read_set_from_file("gas_particles.amuse", "amuse", append_to_file=False)[-100:] #217901 particles
 
 system = Particles(2)
 
@@ -43,26 +47,35 @@ gravity.particles.add_particles(system)
         #    "to_system": gravity.particles.new_channel_to(system)}
 
 converter_hydro = nbody_system.nbody_to_si(gas.mass.sum(), gas[-1].position.length())
-hydro = Fi(converter_hydro)
+hydro = Fi(converter_hydro, mode="openmp")#, redirection="none")
 hydro.dm_particles.add_particle(core)
 hydro.gas_particles.add_particles(gas)
-hydro.parameters.timestep = 1e-2 | units.yr
+print(hydro.parameters.timestep.in_(units.yr))
+hydro.parameters.timestep = 1e-3 | units.yr
 
-gravity_hydro = bridge.Bridge(use_threading=False)
+gravity_hydro = bridge.Bridge()#use_threading=False)
 gravity_hydro.add_system(gravity, (hydro,))
 gravity_hydro.add_system(hydro, (gravity,))
-gravity_hydro.timestep = 1e-2 | units.yr
+gravity_hydro.timestep = 1e-3 | units.yr
+
+t_end = 1 | units.yr
+# gravity_hydro.evolve_model(t_end)
 
 model_time = 0 | units.yr
-t_end = 1 | units.yr
+time = np.arange(model_time.value_in(units.yr), t_end.value_in(units.yr), gravity_hydro.timestep.value_in(units.yr)) | units.yr
+for t in tqdm(time, desc="gravity_hydro"):
+    gravity_hydro.evolve_model(t)
 
-while model_time < t_end:
-    model_time += gravity_hydro.timestep
-    print(model_time)
-    gravity_hydro.evolve_model(model_time)
+# while model_time < t_end:
+#     print(model_time)
+#     gravity_hydro.evolve_model(model_time)
+#     model_time += gravity_hydro.timestep
+#     channel["from system"].copy()
+#     channel["to_system"].copy()
 
-    # channel["from system"].copy()
-    # channel["to_system"].copy()
+write_set_to_file(gravity_hydro.particles, "gravity_hydro_particles.amuse", "amuse", append_to_file=False)
+
+print(gravity_hydro.particles.mass.sum())
 
 gravity.stop()
 hydro.stop()
@@ -76,3 +89,18 @@ hydro.stop()
 # plt.xlabel("x [RSun]")
 # plt.ylabel("y [RSun]")
 # plt.show()
+
+# stop and print run time
+stop = timeit.default_timer()
+print("Time:", stop-start)
+
+# Time: 82.5257115749996 for 1 year
+
+# . MESA-env/bin/activate
+# cd SMA/Project
+# export OMP_NUM_THREADS=30
+# python3 add_earth_moon.py 
+
+# . MESA-env/bin/activate
+# cd SMA/Project
+# python3 add_earth_moon.py 
