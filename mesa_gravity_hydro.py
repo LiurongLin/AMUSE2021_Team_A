@@ -1,26 +1,67 @@
 from amuse.lab import *
 from amuse.units import (units, constants)
 from amuse.couple import bridge
+from amuse.units import quantities
 import matplotlib.pyplot as plt
 import matplotlib.patches as patch
 import numpy as np
 from tqdm import tqdm
 import sys
+import csv
 import timeit
 
-# If you want to quickly check if it works: uncomment line 22 & 59 and comment line 21 & 58
+# If you want to quickly check if it works: uncomment line 63 & 100 and comment line 62 & 99
 # Also remember that if you ran it one time, that you delete the "mesa_gravity_hydro.amuse" file
 # because otherwise you will get an error (because it cannot overwrite the file).
+
+# Change parameter n and t_end
 
 # start run time
 start = timeit.default_timer()
 
+class friction:
+    
+    def __init__(self,hydro,particle):
+        
+        self.hydro = hydro
+        self.particle = particle
+
+    def get_gravity_at_point(self,eps,x,y,z):
+        ##drag coefficient
+        
+        c_drag = 0.47
+        
+        result_ax = quantities.AdaptingVectorQuantity()
+        result_ay = quantities.AdaptingVectorQuantity()
+        result_az = quantities.AdaptingVectorQuantity()
+        
+        for i in range (2):
+        
+            hydro_density = self.hydro.get_hydro_state_at_point(self.particle[i].x,self.particle[i].y,self.particle[i].z,
+                                                          self.particle[i].vx,self.particle[i].vy,self.particle[i].vz)[0]
+            vx = self.particle[i].vx
+            vy = self.particle[i].vy
+            vz = self.particle[i].vz
+
+            cross_section = np.pi*(self.particle[i].radius)**2
+
+            ax = (0.5 * hydro_density * vx**2 * c_drag * cross_section)/self.particle[i].mass
+            ay = (0.5 * hydro_density * vy**2 * c_drag * cross_section)/self.particle[i].mass
+            az = (0.5 * hydro_density * vz**2 * c_drag * cross_section)/self.particle[i].mass
+        
+        
+            result_ax.append(ax)
+            result_ay.append(ay)
+            result_az.append(az)
+        
+        return result_ax,result_ay,result_az
+
 z = 0.0134
 RSun = 696340e5 #cm
 RRoche = 0.9*1.5e11 | units.m
-evolving_age = 12e3 | units.Myr
-# evolving_age = 1e3 | units.Myr
-n = 5
+# evolving_age = 12e3 | units.Myr
+evolving_age = 1e3 | units.Myr
+n = 1
 
 sun = Particles(1)
 sun.mass = 1 | units.MSun
@@ -55,8 +96,8 @@ stellar.parameters.metallicity = z
 evol_sun = stellar.particles[0]
 iterations = 0
 
-while evol_sun.radius <= RRoche or (evol_sun.age > evolving_age and old_radius > evol_sun.radius):
-# while evol_sun.age <= evolving_age:
+# while evol_sun.radius <= RRoche or (evol_sun.age > evolving_age and old_radius > evol_sun.radius):
+while evol_sun.age <= evolving_age:
     # print(evol_sun.age.in_(units.Myr))
 
     stellar.evolve_model()
@@ -66,12 +107,12 @@ while evol_sun.radius <= RRoche or (evol_sun.age > evolving_age and old_radius >
 
     if iterations == 100:
         iterations = 0
-        print("Radius sun=", evol_sun.radius.in_(units.RSun))
-        print("Evolving age=", evol_sun.age.in_(units.Myr))    
+        print("Radius sun =", evol_sun.radius.in_(units.RSun))
+        print("Evolving age =", evol_sun.age.in_(units.Myr))    
 
-print("Evolving age=", evol_sun.age.in_(units.Myr))    
+print("Evolving age =", evol_sun.age.in_(units.Myr))    
 
-target_core_mass = evol_sun.core_mass
+target_core_mass = 0.8 * evol_sun.mass
 part_of_smaller_mass = 0.25
 N_h = (evol_sun.mass - target_core_mass) / (part_of_smaller_mass * (1 | units.MEarth))
 
@@ -85,8 +126,21 @@ sph_model = convert_stellar_model_to_SPH(evol_sun,
 core = sph_model.core_particle.as_set()
 gas = sph_model.gas_particles
 
-print("Ngas=", len(gas), "Ncore=", core)
-print("RCore=", core.radius.value_in(units.m)[0])
+print("Ngas =", len(gas), "Ncore =", core)
+print("RCore =", core.radius.value_in(units.m)[0])
+
+x_coordinates = dict()
+y_coordinates = dict()
+
+x_coordinates["core"] = []
+x_coordinates["gas_last"] = []
+x_coordinates["earth"] = []
+x_coordinates["moon"] = []
+
+y_coordinates["core"] = []
+y_coordinates["gas_last"] = []
+y_coordinates["earth"] = []
+y_coordinates["moon"] = []
 
 for i in range(n):
 
@@ -97,7 +151,12 @@ for i in range(n):
     # hydro.parameters.timestep = 1e-3 | units.yr
 
     gravity_hydro = bridge.Bridge()#use_threading=False)
-    gravity_hydro.add_system(gravity, (hydro,))
+    if hydro.get_hydro_state_at_point(gravity.particles[0].x, gravity.particles[0].y, gravity.particles[0].z,
+                                      gravity.particles[0].vx, gravity.particles[0].vy, 
+                                      gravity.particles[0].vz)[0].value_in(units.kg/(units.m**3)) == 0:
+        gravity_hydro.add_system(gravity, (hydro,))
+    else:
+        gravity_hydro.add_system(gravity, (hydro, friction(hydro, gravity.particles)))
     gravity_hydro.timestep = 0.5 * gravity.parameters.timestep
     # gravity_hydro.timestep = 1e-3 | units.yr
     print("Gravity_hydro timestep =", gravity_hydro.timestep)
@@ -106,12 +165,23 @@ for i in range(n):
     model_time = 0 | units.yr
     time = np.arange(model_time.value_in(units.yr), t_end.value_in(units.yr), gravity_hydro.timestep.value_in(units.yr)) | units.yr
     for t in tqdm(time, desc="gravity_hydro"):
+        x_coordinates["core"].append(core.x.value_in(units.cm)[0])
+        x_coordinates["gas_last"].append(gas[-1].x.value_in(units.cm))
+        x_coordinates["earth"].append(gravity.particles[0].x.value_in(units.cm))
+        x_coordinates["moon"].append(gravity.particles[1].x.value_in(units.cm))
+        
+        y_coordinates["core"].append(core.y.value_in(units.cm)[0])
+        y_coordinates["gas_last"].append(gas[-1].y.value_in(units.cm))
+        y_coordinates["earth"].append(gravity.particles[0].y.value_in(units.cm))
+        y_coordinates["moon"].append(gravity.particles[1].y.value_in(units.cm))
+        
         gravity_hydro.evolve_model(t)
     
     stellar.evolve_model(t_end)
 
     if i == n-1:
-        write_set_to_file(gravity_hydro.particles, "mesa_gravity_hydro.amuse", "amuse", append_to_file=False)
+        write_set_to_file(gravity_hydro.particles, "gravity_particles_t_end={}yr_n={}.amuse".format(t_end.value_in(units.yr), n), "amuse", append_to_file=False)
+        write_set_to_file(hydro.particles, "hydro_particles_t_end={}yr_n={}.amuse".format(t_end.value_in(units.yr), n), "amuse", append_to_file=False)
     
     hydro.stop()
 
@@ -125,6 +195,11 @@ for i in range(n):
     core = sph_model.core_particle.as_set()
     gas = sph_model.gas_particles
 
+data_file = open("coordinates.csv_t_end={}yr_n={}".format(t_end.value_in(units.yr), n), mode='w')
+data_writer = csv.writer(data_file)
+for (key, x), y in zip(x_coordinates.items(), y_coordinates.values()):
+    data_writer.writerow([key, x, y])
+data_file.close()
 
 plt.scatter(np.array(gas.x.value_in(units.cm)) / RSun, np.array(gas.y.value_in(units.cm)) / RSun)
 plt.scatter(np.array(core.x.value_in(units.cm)) / RSun, np.array(core.y.value_in(units.cm)) / RSun, label="Sun")
@@ -133,7 +208,8 @@ plt.scatter(gravity.particles[1].x.value_in(units.cm) / RSun, gravity.particles[
 plt.xlabel("x [RSun]")
 plt.ylabel("y [RSun]")
 plt.legend(loc="upper left")
-plt.show()
+plt.savefig("scatter_plot_system_t_end={}yr_n={}".format(t_end.value_in(units.yr), n))
+plt.close()
 
 stellar.stop()
 gravity.stop()
