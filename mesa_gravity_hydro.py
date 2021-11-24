@@ -181,7 +181,7 @@ for i in range(n):
     # gravity_hydro.timestep = 1e-3 | units.yr
     print("Gravity_hydro timestep =", gravity_hydro.timestep)
 
-    t_end = 1 | units.yr
+    t_end = 2 | units.yr
     model_time = 0 | units.yr
     time = np.arange(model_time.value_in(units.yr), t_end.value_in(units.yr), gravity_hydro.timestep.value_in(units.yr)) | units.yr
     for t in tqdm(time, desc="gravity_hydro"):
@@ -196,12 +196,12 @@ for i in range(n):
         y_coordinates["moon"].append(gravity.particles[1].y.value_in(units.cm))
 
         ae = orbital_elements_from_binary([core, gravity.particles[0]], G=constants.G)[2:4]
-        semi_major_axis["earth"] = ae[0].value_in(units.m)
-        eccentricities["earth"] = ae[1]
+        semi_major_axis["earth"].append(ae[0].value_in(units.m))
+        eccentricities["earth"].append(ae[1])
 
         ae = orbital_elements_from_binary([gravity.particles[0], gravity.particles[1]], G=constants.G)[2:4]
-        semi_major_axis["moon"] = ae[0].value_in(units.m)
-        eccentricities["moon"] = ae[1]
+        semi_major_axis["moon"].append(ae[0].value_in(units.m))
+        eccentricities["moon"].append(ae[1])
 
         gravity_hydro.evolve_model(t)
 
@@ -246,8 +246,8 @@ data_file.close()
 
 data_file = open("temperature_luminosity_sun_t_evolve={}Myr.csv".format(evolving_age.value_in(units.Myr), n), mode='w')
 data_writer = csv.writer(data_file)
-for T, L in zip(temperature_sun, luminosity_sun):
-    data_writer.writerow([key, T, L])
+data_writer.writerow(["T [K]", temperature_sun])
+data_writer.writerow(["L [LSun]", luminosity_sun])
 data_file.close()
 
 stellar.stop()
