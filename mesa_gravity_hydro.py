@@ -2,6 +2,7 @@ from amuse.lab import *
 from amuse.units import (units, constants)
 from amuse.couple import bridge
 from amuse.units import quantities
+from amuse.ext.orbital_elements import orbital_elements_from_binary
 import matplotlib.pyplot as plt
 import matplotlib.patches as patch
 import numpy as np
@@ -59,9 +60,9 @@ class friction:
 z = 0.0134
 RSun = 696340e5 #cm
 RRoche = 0.9*1.5e11 | units.m
-evolving_age = 12e3 | units.Myr
-# evolving_age = 1e3 | units.Myr
-n = 5
+# evolving_age = 12e3 | units.Myr
+evolving_age = 1e3 | units.Myr
+n = 1
 
 sun = Particles(1)
 sun.mass = 1 | units.MSun
@@ -96,9 +97,15 @@ stellar.parameters.metallicity = z
 evol_sun = stellar.particles[0]
 iterations = 0
 
-while evol_sun.radius <= RRoche or (evol_sun.age > evolving_age and old_radius > evol_sun.radius):
-# while evol_sun.age <= evolving_age:
+luminosity_sun = []
+temperature_sun = []
+
+# while evol_sun.radius <= RRoche or (evol_sun.age > evolving_age and old_radius > evol_sun.radius):
+while evol_sun.age <= evolving_age:
     # print(evol_sun.age.in_(units.Myr))
+
+    luminosity_sun.append(evol_sun.luminosity.value_in(units.LSun))
+    temperature_sun.append(evol_sun.temperature.value_in(units.K))
 
     stellar.evolve_model()
 
@@ -136,6 +143,8 @@ print("RCore =", core.radius.value_in(units.m)[0])
 
 x_coordinates = dict()
 y_coordinates = dict()
+eccentricities = dict()
+semi_major_axis = dict()
 
 x_coordinates["core"] = []
 x_coordinates["gas_last"] = []
@@ -146,6 +155,12 @@ y_coordinates["core"] = []
 y_coordinates["gas_last"] = []
 y_coordinates["earth"] = []
 y_coordinates["moon"] = []
+
+eccentricities["earth"] = []
+eccentricities["moon"] = []
+
+semi_major_axis["earth"] = []
+semi_major_axis["moon"] = []
 
 for i in range(n):
 
@@ -166,7 +181,7 @@ for i in range(n):
     # gravity_hydro.timestep = 1e-3 | units.yr
     print("Gravity_hydro timestep =", gravity_hydro.timestep)
 
-    t_end = 50 | units.yr
+    t_end = 1 | units.yr
     model_time = 0 | units.yr
     time = np.arange(model_time.value_in(units.yr), t_end.value_in(units.yr), gravity_hydro.timestep.value_in(units.yr)) | units.yr
     for t in tqdm(time, desc="gravity_hydro"):
@@ -179,7 +194,15 @@ for i in range(n):
         y_coordinates["gas_last"].append(gas[-1].y.value_in(units.cm))
         y_coordinates["earth"].append(gravity.particles[0].y.value_in(units.cm))
         y_coordinates["moon"].append(gravity.particles[1].y.value_in(units.cm))
-        
+
+        ae = orbital_elements_from_binary([core, gravity.particles[0]], G=constants.G)[2:4]
+        semi_major_axis["earth"] = ae[0].value_in(units.m)
+        eccentricities["earth"] = ae[1]
+
+        ae = orbital_elements_from_binary([gravity.particles[0], gravity.particles[1]], G=constants.G)[2:4]
+        semi_major_axis["moon"] = ae[0].value_in(units.m)
+        eccentricities["moon"] = ae[1]
+
         gravity_hydro.evolve_model(t)
 
     stellar.evolve_model(t_end)
@@ -213,6 +236,18 @@ data_file = open("coordinates_t_end={}yr_n={}.csv".format(t_end.value_in(units.y
 data_writer = csv.writer(data_file)
 for (key, x), y in zip(x_coordinates.items(), y_coordinates.values()):
     data_writer.writerow([key, x, y])
+data_file.close()
+
+data_file = open("ae_t_end={}yr_n={}.csv".format(t_end.value_in(units.yr), n), mode='w')
+data_writer = csv.writer(data_file)
+for (key, a), e in zip(semi_major_axis.items(), eccentricities.values()):
+    data_writer.writerow([key, a, e])
+data_file.close()
+
+data_file = open("temperature_luminosity_sun_t_evolve={}Myr.csv".format(evolving_age.value_in(units.Myr), n), mode='w')
+data_writer = csv.writer(data_file)
+for T, L in zip(temperature_sun, luminosity_sun):
+    data_writer.writerow([key, T, L])
 data_file.close()
 
 stellar.stop()
