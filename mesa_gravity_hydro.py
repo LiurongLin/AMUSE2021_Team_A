@@ -2,6 +2,7 @@ from amuse.lab import *
 from amuse.units import (units, constants)
 from amuse.couple import bridge
 from amuse.units import quantities
+from amuse.ext.orbital_elements import orbital_elements_from_binary
 import matplotlib.pyplot as plt
 import matplotlib.patches as patch
 import numpy as np
@@ -14,7 +15,7 @@ import timeit
 # Also remember that if you ran it one time, that you delete the "mesa_gravity_hydro.amuse" file
 # because otherwise you will get an error (because it cannot overwrite the file).
 
-# Change parameter n and t_end
+# Change parameter n and t_end (try n=5 and t_end=100yr again with new code for saving files)
 
 # start run time
 start = timeit.default_timer()
@@ -96,9 +97,15 @@ stellar.parameters.metallicity = z
 evol_sun = stellar.particles[0]
 iterations = 0
 
+luminosity_sun = []
+temperature_sun = []
+
 # while evol_sun.radius <= RRoche or (evol_sun.age > evolving_age and old_radius > evol_sun.radius):
 while evol_sun.age <= evolving_age:
     # print(evol_sun.age.in_(units.Myr))
+
+    luminosity_sun.append(evol_sun.luminosity.value_in(units.LSun))
+    temperature_sun.append(evol_sun.temperature.value_in(units.K))
 
     stellar.evolve_model()
 
@@ -112,9 +119,14 @@ while evol_sun.age <= evolving_age:
 
 print("Evolving age =", evol_sun.age.in_(units.Myr))    
 
+# print current run time
+current_time = timeit.default_timer()
+print("Current run time =", int((current_time-start)/60), "min")
+
 target_core_mass = 0.8 * evol_sun.mass
 part_of_smaller_mass = 0.25
 N_h = (evol_sun.mass - target_core_mass) / (part_of_smaller_mass * (1 | units.MEarth))
+# N_h = (evol_sun.mass - target_core_mass) / (part_of_smaller_mass * moon.mass)
 
 sph_model = convert_stellar_model_to_SPH(evol_sun,
                                          round(N_h),
@@ -131,6 +143,8 @@ print("RCore =", core.radius.value_in(units.m)[0])
 
 x_coordinates = dict()
 y_coordinates = dict()
+eccentricities = dict()
+semi_major_axis = dict()
 
 x_coordinates["core"] = []
 x_coordinates["gas_last"] = []
@@ -141,6 +155,12 @@ y_coordinates["core"] = []
 y_coordinates["gas_last"] = []
 y_coordinates["earth"] = []
 y_coordinates["moon"] = []
+
+eccentricities["earth"] = []
+eccentricities["moon"] = []
+
+semi_major_axis["earth"] = []
+semi_major_axis["moon"] = []
 
 for i in range(n):
 
@@ -161,7 +181,7 @@ for i in range(n):
     # gravity_hydro.timestep = 1e-3 | units.yr
     print("Gravity_hydro timestep =", gravity_hydro.timestep)
 
-    t_end = 1 | units.yr
+    t_end = 2 | units.yr
     model_time = 0 | units.yr
     time = np.arange(model_time.value_in(units.yr), t_end.value_in(units.yr), gravity_hydro.timestep.value_in(units.yr)) | units.yr
     for t in tqdm(time, desc="gravity_hydro"):
@@ -174,15 +194,32 @@ for i in range(n):
         y_coordinates["gas_last"].append(gas[-1].y.value_in(units.cm))
         y_coordinates["earth"].append(gravity.particles[0].y.value_in(units.cm))
         y_coordinates["moon"].append(gravity.particles[1].y.value_in(units.cm))
-        
+
+        ae = orbital_elements_from_binary([core, gravity.particles[0]], G=constants.G)[2:4]
+        semi_major_axis["earth"].append(ae[0].value_in(units.m))
+        eccentricities["earth"].append(ae[1])
+
+        ae = orbital_elements_from_binary([gravity.particles[0], gravity.particles[1]], G=constants.G)[2:4]
+        semi_major_axis["moon"].append(ae[0].value_in(units.m))
+        eccentricities["moon"].append(ae[1])
+
         gravity_hydro.evolve_model(t)
-    
+
     stellar.evolve_model(t_end)
 
-    if i == n-1:
-        write_set_to_file(gravity_hydro.particles, "gravity_particles_t_end={}yr_n={}.amuse".format(t_end.value_in(units.yr), n), "amuse", append_to_file=False)
-        write_set_to_file(hydro.particles, "hydro_particles_t_end={}yr_n={}.amuse".format(t_end.value_in(units.yr), n), "amuse", append_to_file=False)
+    write_set_to_file(gravity_hydro.particles, "gravity_particles_t_end={}yr_n={}_i={}.amuse".format(t_end.value_in(units.yr), n, i), "amuse", append_to_file=False)
+    write_set_to_file(hydro.particles, "hydro_particles_t_end={}yr_n={}_i={}.amuse".format(t_end.value_in(units.yr), n, i), "amuse", append_to_file=False)
     
+    plt.scatter(np.array(gas.x.value_in(units.cm)) / RSun, np.array(gas.y.value_in(units.cm)) / RSun)
+    plt.scatter(np.array(core.x.value_in(units.cm)) / RSun, np.array(core.y.value_in(units.cm)) / RSun, label="Sun")
+    plt.scatter(gravity.particles[0].x.value_in(units.cm) / RSun, gravity.particles[0].y.value_in(units.cm) / RSun, label="Earth")
+    plt.scatter(gravity.particles[1].x.value_in(units.cm) / RSun, gravity.particles[1].y.value_in(units.cm) / RSun, label="Moon")
+    plt.xlabel("x [RSun]")
+    plt.ylabel("y [RSun]")
+    plt.legend(loc="upper left")
+    plt.savefig("scatter_plot_system_t_end={}yr_n={}_i={}".format(t_end.value_in(units.yr), n, i))
+    plt.close()
+
     hydro.stop()
 
     sph_model = convert_stellar_model_to_SPH(evol_sun,
@@ -195,25 +232,27 @@ for i in range(n):
     core = sph_model.core_particle.as_set()
     gas = sph_model.gas_particles
 
-data_file = open("coordinates.csv_t_end={}yr_n={}".format(t_end.value_in(units.yr), n), mode='w')
+data_file = open("coordinates_t_end={}yr_n={}.csv".format(t_end.value_in(units.yr), n), mode='w')
 data_writer = csv.writer(data_file)
 for (key, x), y in zip(x_coordinates.items(), y_coordinates.values()):
     data_writer.writerow([key, x, y])
 data_file.close()
 
-plt.scatter(np.array(gas.x.value_in(units.cm)) / RSun, np.array(gas.y.value_in(units.cm)) / RSun)
-plt.scatter(np.array(core.x.value_in(units.cm)) / RSun, np.array(core.y.value_in(units.cm)) / RSun, label="Sun")
-plt.scatter(gravity.particles[0].x.value_in(units.cm) / RSun, gravity.particles[0].y.value_in(units.cm) / RSun, label="Earth")
-plt.scatter(gravity.particles[1].x.value_in(units.cm) / RSun, gravity.particles[1].y.value_in(units.cm) / RSun, label="Moon")
-plt.xlabel("x [RSun]")
-plt.ylabel("y [RSun]")
-plt.legend(loc="upper left")
-plt.savefig("scatter_plot_system_t_end={}yr_n={}".format(t_end.value_in(units.yr), n))
-plt.close()
+data_file = open("ae_t_end={}yr_n={}.csv".format(t_end.value_in(units.yr), n), mode='w')
+data_writer = csv.writer(data_file)
+for (key, a), e in zip(semi_major_axis.items(), eccentricities.values()):
+    data_writer.writerow([key, a, e])
+data_file.close()
+
+data_file = open("temperature_luminosity_sun_t_evolve={}Myr.csv".format(evolving_age.value_in(units.Myr), n), mode='w')
+data_writer = csv.writer(data_file)
+data_writer.writerow(["T [K]", temperature_sun])
+data_writer.writerow(["L [LSun]", luminosity_sun])
+data_file.close()
 
 stellar.stop()
 gravity.stop()
 
 # stop and print run time
 stop = timeit.default_timer()
-print("Time:", stop-start)
+print("Time:", int((stop-start)/60), "min")
