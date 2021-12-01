@@ -244,7 +244,7 @@ for (key, a), e in zip(semi_major_axis.items(), eccentricities.values()):
     data_writer.writerow([key, a, e])
 data_file.close()
 
-data_file = open("temperature_luminosity_sun_t_evolve={}Myr.csv".format(evolving_age.value_in(units.Myr), n), mode='w')
+data_file = open("temperature_luminosity_sun_t_evolve={}Myr.csv".format(evolving_age.value_in(units.Myr)), mode='w')
 data_writer = csv.writer(data_file)
 data_writer.writerow(["T [K]", temperature_sun])
 data_writer.writerow(["L [LSun]", luminosity_sun])
