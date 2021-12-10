@@ -57,36 +57,22 @@ class friction:
         
         return result_ax,result_ay,result_az
 
-z = 0.0188
+# z = 0.0188
+z = 0.0134
 eta = 0.2
 RSun = 696340e5 #cm
-RRoche = 0.9*1.5e11 | units.m
-# evolving_age = 12e3 | units.Myr
-evolving_age = 1e3 | units.Myr
-n = 1
+# RRoche = 0.5*1.5e11 | units.m
+evolving_age = 12e3 | units.Myr
+# evolving_age = 1e3 | units.Myr
+n = 100
 
 sun = Particles(1)
 sun.mass = 1 | units.MSun
 
-system = Particles(1)
-
-# Earth
-earth = system[0]
-earth.name = "Earth"
-earth.mass = units.MEarth(1)
-earth.radius = units.REarth(1) 
-earth.position = np.array((1,0.0,0.0)) | units.au
-earth.velocity = np.array((0.0,29780,0.0)) | units.ms
-
-converter_gravity = nbody_system.nbody_to_si(system.mass.sum(), earth.position.length())
-gravity = Huayno(converter_gravity)
-gravity.particles.add_particles(system)
-gravity.parameters.timestep = 0.1 | units.yr
-
 stellar = MESA()
 stellar.particles.add_particle(sun)
 stellar.parameters.metallicity = z
-stellar.parameters.reimers_wind_efficiency = eta
+# stellar.parameters.reimers_wind_efficiency = eta
 
 evol_sun = stellar.particles[0]
 iterations = 0
@@ -119,7 +105,7 @@ while evol_sun.age <= evolving_age:
 
 print("Evolving age =", evol_sun.age.in_(units.Myr))    
 
-data_file = open("temperature_luminosity_sun_t_evolve={}Myr_z={}_eta={}.csv".format(int(evol_sun.age.value_in(units.Myr)), z, eta), mode='w')
+data_file = open("t_evolve=12Gyr_t_end=1_n=100_diff_v/temperature_luminosity_sun_t_evolve={}Myr_z={}_eta={}.csv".format(int(evol_sun.age.value_in(units.Myr)), z, eta), mode='w')
 data_writer = csv.writer(data_file)
 data_writer.writerow(["T [K]", temperature_sun])
 data_writer.writerow(["L [LSun]", luminosity_sun])
@@ -131,6 +117,25 @@ data_file.close()
 # print current run time
 current_time = timeit.default_timer()
 print("Current run time =", int((current_time-start)/60), "min")
+
+system = Particles(1)
+
+# Earth
+earth = system[0]
+earth.name = "Earth"
+earth.mass = units.MEarth(1)
+earth.radius = units.REarth(1) 
+earth.position = np.array((1,0.0,0.0)) | units.au
+def relative_orbital_velocity(mass, distance):
+    return ((constants.G*mass/distance).sqrt()).value_in(units.km/units.s)
+vorb = relative_orbital_velocity(evol_sun.mass + earth.mass, earth.position.sum())
+earth.velocity = np.array((0.0,1,0.0)) * vorb | units.km/units.s
+print("v_earth =", earth.velocity)
+
+converter_gravity = nbody_system.nbody_to_si(system.mass.sum(), earth.position.length())
+gravity = Huayno(converter_gravity)
+gravity.particles.add_particles(system)
+gravity.parameters.timestep = 0.1 | units.yr
 
 target_core_mass = 0.8 * evol_sun.mass
 part_of_smaller_mass = 0.25
@@ -215,8 +220,8 @@ for i in range(n):
 
     stellar.evolve_model(t_end)
 
-    write_set_to_file(gravity_hydro.particles, "gravity_particles_t_end={}yr_n={}_i={}_z={}.amuse".format(t_end.value_in(units.yr), n, i, z), "amuse", append_to_file=False)
-    write_set_to_file(hydro.particles, "hydro_particles_t_end={}yr_n={}_i={}_z={}.amuse".format(t_end.value_in(units.yr), n, i, z), "amuse", append_to_file=False)
+    write_set_to_file(gravity_hydro.particles, "t_evolve=12Gyr_t_end=1_n=100_diff_v/gravity_particles_t_end={}yr_n={}_i={}_z={}.amuse".format(t_end.value_in(units.yr), n, i, z), "amuse", append_to_file=False)
+    write_set_to_file(hydro.particles, "t_evolve=12Gyr_t_end=1_n=100_diff_v/hydro_particles_t_end={}yr_n={}_i={}_z={}.amuse".format(t_end.value_in(units.yr), n, i, z), "amuse", append_to_file=False)
     
     # plt.scatter(np.array(gas.x.value_in(units.cm)) / RSun, np.array(gas.y.value_in(units.cm)) / RSun)
     # plt.scatter(np.array(core.x.value_in(units.cm)) / RSun, np.array(core.y.value_in(units.cm)) / RSun, label="Sun")
@@ -239,25 +244,25 @@ for i in range(n):
     core = sph_model.core_particle.as_set()
     gas = sph_model.gas_particles
 
-data_file = open("coordinates_t_end={}yr_n={}_z={}.csv".format(t_end.value_in(units.yr), n, z), mode='w')
+data_file = open("t_evolve=12Gyr_t_end=1_n=100_diff_v/coordinates_t_end={}yr_n={}_z={}.csv".format(t_end.value_in(units.yr), n, z), mode='w')
 data_writer = csv.writer(data_file)
 for (key, x), y in zip(x_coordinates.items(), y_coordinates.values()):
     data_writer.writerow([key, x, y])
 data_file.close()
 
-data_file = open("ae_t_end={}yr_n={}_z={}.csv".format(t_end.value_in(units.yr), n, z), mode='w')
+data_file = open("t_evolve=12Gyr_t_end=1_n=100_diff_v/ae_t_end={}yr_n={}_z={}.csv".format(t_end.value_in(units.yr), n, z), mode='w')
 data_writer = csv.writer(data_file)
 for (key, a), e in zip(semi_major_axis.items(), eccentricities.values()):
     data_writer.writerow([key, a, e])
 data_file.close()
 
-data_file = open("masses_core_gas_t_end={}yr_n={}_z={}.csv".format(t_end.value_in(units.yr), n, z), mode='w')
+data_file = open("t_evolve=12Gyr_t_end=1_n=100_diff_v/masses_core_gas_t_end={}yr_n={}_z={}.csv".format(t_end.value_in(units.yr), n, z), mode='w')
 data_writer = csv.writer(data_file)
 data_writer.writerow(["mass_core [MSun]", mass_core])
 data_writer.writerow(["mass_gas [MSun]", mass_gas])
 data_file.close()
 
-data_file = open("time_for_loop_t_end={}yr_n={}_z={}.csv".format(t_end.value_in(units.yr), n, z), mode='w')
+data_file = open("t_evolve=12Gyr_t_end=1_n=100_diff_v/time_for_loop_t_end={}yr_n={}_z={}.csv".format(t_end.value_in(units.yr), n, z), mode='w')
 data_writer = csv.writer(data_file)
 for key, tf in time_for_loop.items():
     data_writer.writerow([key, tf])
