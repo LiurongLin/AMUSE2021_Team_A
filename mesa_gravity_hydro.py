@@ -220,8 +220,8 @@ for i in range(n):
     stellar.evolve_model(t_end)
 
     # Write the gravity and hydro particle sets to an amuse file
-    write_set_to_file(gravity_hydro.particles, "gravity_particles_t_end={}yr_n={}_i={}_z={}.amuse".format(t_end.value_in(units.yr), n, i, z), "amuse", append_to_file=False)
-    write_set_to_file(hydro.particles, "hydro_particles_t_end={}yr_n={}_i={}_z={}.amuse".format(t_end.value_in(units.yr), n, i, z), "amuse", append_to_file=False)
+    write_set_to_file(gravity_hydro.particles, "gravity_particles_t_end={}yr_n={}_i={}_z={}.amuse".format(t_end.value_in(units.yr), n, i, z), "amuse", append_to_file=True)
+    write_set_to_file(hydro.particles, "hydro_particles_t_end={}yr_n={}_i={}_z={}.amuse".format(t_end.value_in(units.yr), n, i, z), "amuse", append_to_file=True)
     
     hydro.stop()
 
