@@ -56,6 +56,5 @@ The following folders contain the ".csv" file of the eccentricity along time and
 <h3> plot_eccentricity_vs_t.ipynb </h3>
 Use this code to make the eccentricity against time plots.
 
-
 <h3> coordinates_plot.ipynb </h3>
 Use this code to make the trajectory of the earth after we add it into the solar system.
