@@ -34,4 +34,9 @@ Use this code to visualise the temperature, luminosity, mass, radius or evolving
 Use this code to make a plot of the coordinates of the core and gas particles together with the Earth coordinates. Where the Earth will be visualised with a color corresponding to the evolving time.
 
 <h2> Results </h2>
-There are a few folders which contain the results of a run where the parameters are used which are in the title of the folder.
+The following folders contain the results of specific runs:<br>
+- t_end={}_n={}_z={} contain the result of a normal run with the parameters given in the name of the folder. <br>
+- t_end={}_n={}_z={}_e0 same as the above, except that there is an extra condition in the while loop of the stellar evolution. The conditions here are that it should evolve to at least 12 Gyr and in addition, the Sun's radius should correspond to 0.9 au. <br>
+- r_roche={}_t_end={}_n={}_z={} same as the above folder but now with a Sun's radius corresponding to 0.5 au. <br>
+- t_evolve={}_t_end={}_n={}_diff_v only evolved until 12 Gyr (without extra condition), but changed the velocity corresponding with the Earth's position after the stellar evolution. <br>
+- eccentricity_vs_time contains plots of the eccentricity as a function of time for different values of t_end and n. <br>
