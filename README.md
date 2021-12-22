@@ -62,3 +62,6 @@ Folder that saves the eccentricity against time plots.
 
 <h3> new_v </h3>
 Folder that saves the plots of the trajectory of the Earth.
+
+<h2> Report </h2>
+In SMA_final_report.pdf the final report of this project can be found.
