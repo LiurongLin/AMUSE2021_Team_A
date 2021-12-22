@@ -45,7 +45,7 @@ The following folders contain the results of specific runs:<br>
 More results can be found in the 'Liurong' branch. 
 
 The final results that are presented in the report are in the "Liurong" branch.
-The following folders contain the ".csv" file of the eccentricity along time and ".amuse" files of the final stage of the core and gas particles of the Sun.<br>
+The following folders contain the ".csv" file of the eccentricity, position of the Earth along time and ".amuse" files of the final stage of the core and gas particles of the Sun.<br>
 - t_end={}_n={}\_{}, where the last {} represents the final stage of the stellar evolution code, which are: <br>
   - 12Gyr: initally evolve the Sun to the age of 12 Gyr <br>
   - 12Gyr_moon: initally evolve the Sun to the age of 12 Gyr, with the moon in the gravity system <br>
