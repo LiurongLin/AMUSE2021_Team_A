@@ -40,3 +40,5 @@ The following folders contain the results of specific runs:<br>
 - r_roche={}_t_end={}_n={}_z={} same as the above folder but now with a Sun's radius corresponding to 0.5 au. <br>
 - t_evolve={}_t_end={}_n={}_diff_v only evolved until 12 Gyr (without extra condition), but changed the velocity corresponding with the Earth's position after the stellar evolution. <br>
 - eccentricity_vs_time contains plots of the eccentricity as a function of time for different values of t_end and n. <br>
+<br>
+More results can be found in the 'Liurong' branch. 
