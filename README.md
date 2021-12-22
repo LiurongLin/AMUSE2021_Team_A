@@ -6,6 +6,9 @@
 - Add the Earth to the system <br>
 - (Add Moon if possible) <br>
 
+<h2> Software required </h2>
+This code uses the AMUSE software. For more information go to: https://www.amusecode.org/
+
 <h2> How to use the code? </h2>
 <h3> mesa_gravity_hydro.py </h3>
 This is the code to run the evolution. First it evolves the Sun, then it divides the Sun into a core and gas particle which can be added to the hydro code. After that the gravity particle (Earth) is added. <br>
