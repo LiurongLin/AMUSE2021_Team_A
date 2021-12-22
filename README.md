@@ -51,3 +51,10 @@ The following folders contain the ".csv" file of the eccentricity along time and
   - 12.05Gyr: initally evolve the Sun to the age of 12.05 Gyr <br>
   - 0.9AU: initally evolve the Sun to have a radius of 0.9 AU <br>
   - 0.9AU_no_friction: initally evolve the Sun to have a radius of 0.9 AU and neglect the friction caused by the envelope of the Sun <br>
+
+<h3> plot_eccentricity_vs_t.ipynb </h3>
+Use this code to make the eccentricity against time plots
+
+
+<h3> coordinates_plot.ipynb <\h3>
+ Use this code to make the trajectory of the earth after we add it into the solar system
