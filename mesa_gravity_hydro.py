@@ -43,11 +43,21 @@ class friction:
             # Calculate the cross section
             cross_section = np.pi*(self.particle[i].radius)**2
 
-            # Calculate the acceleration by dividing the drag force by the mass
-            ax = (0.5 * hydro_density * vx**2 * c_drag * cross_section)/self.particle[i].mass
-            ay = (0.5 * hydro_density * vy**2 * c_drag * cross_section)/self.particle[i].mass
-            az = (0.5 * hydro_density * vz**2 * c_drag * cross_section)/self.particle[i].mass
-               
+            # Check in which direction the velocity components are and then
+            # calculate the acceleration by dividing the drag force by the mass
+            if vx.value_in(units.ms) < 0:
+                ax = (0.5 * hydro_density * vx**2 * c_drag * cross_section)/self.particle[i].mass
+            if vx.value_in(units.ms) >= 0:
+                ax = -(0.5 * hydro_density * vx**2 * c_drag * cross_section)/self.particle[i].mass     
+            if vy.value_in(units.ms) < 0:
+                ay = (0.5 * hydro_density * vy**2 * c_drag * cross_section)/self.particle[i].mass
+            if vy.value_in(units.ms) >= 0:
+                ay = -(0.5 * hydro_density * vy**2 * c_drag * cross_section)/self.particle[i].mass   
+            if vz.value_in(units.ms) < 0:
+                az = (0.5 * hydro_density * vz**2 * c_drag * cross_section)/self.particle[i].mass
+            if vz.value_in(units.ms) >= 0:
+                az = -(0.5 * hydro_density * vz**2 * c_drag * cross_section)/self.particle[i].mass
+                
             result_ax.append(ax)
             result_ay.append(ay)
             result_az.append(az)
