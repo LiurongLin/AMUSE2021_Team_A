@@ -1,7 +1,7 @@
 # AMUSE2021_Team_A
 
 <h2> Plan </h2>
-- Evolve star to Red Giant (what should be the evolving time?) <br>
+- Evolve star to red giant (what should be the evolving time?) <br>
 - Make a hydroblob <br>
 - Add the Earth to the system <br>
 - (Add Moon if possible) <br>
@@ -13,7 +13,7 @@ This code uses the AMUSE software. For more information go to: https://www.amuse
 <h3> mesa_gravity_hydro.py </h3>
 This is the code to run the evolution. First it evolves the Sun, then it divides the Sun into a core and gas particle which can be added to the hydro code. After that the gravity particle (Earth) is added. <br>
 <br>
-To quickly check if the code runs: change the evolving_age, n and t_end to a smaller number (e.g. evolving_age=1e3 Myr, n=1, t_end=1).<br>
+To quickly check if the code runs: change the evolving_age, n and t_end to a smaller number (e.g. evolving_age=1e3 Myr, n=1, t_end=1 yr).<br>
 <br>
 It creates the following files: <br>
 - temperature_luminosity_sun_t_evolve={}Myr_z={}_eta={}.csv which contains the temperature [K], luminosity [Lsun], mass [Msun], radius [Rsun] and evolving age [Myr] of the Sun at every timestep in the stellar evolution. <br>
@@ -31,7 +31,7 @@ Use this code to make an HR-diagram for the Sun (luminosity against temperature)
 Use this code to visualise the temperature, luminosity, mass, radius or evolving age of the Sun. 
 
 <h3> visualisation.py </h3>
-Use this code to make a plot of the coordinates of the core and gas particles together with the Earth coordinates. Where the Earth will be visualised with a color corresponding to the evolving time.
+Use this code to make a plot of the coordinates of the core and gas particles together with the Earth's coordinates. Where the Earth will be visualised with a color corresponding to the evolving time.
 
 <h3> ae_earth_moon.py </h3>
 This code can be used to plot the semi-major axis and the eccentricity resulting from the ae_t_end={}yr_n={}_z={}.csv file. 
@@ -43,7 +43,7 @@ This Jupyter notebook contains the class which calculates the friction.
 This is the code that contains only the stellar evolution code. So the code to evolve the Sun. 
 
 <h2> Results </h2>
-core_particle.amuse and gas_particles.amuse are an example of resulting particle sets. They can be used to test the visualisation code with. <br>
+core_particle.amuse and gas_particles.amuse are an example of resulting particle sets. They can be used to test the visualisation code. <br>
 <br>
 The folder scatter_coordinates_plots contains a few plots of the coordinates for different runs (specified in their name). <br>
 <br>
