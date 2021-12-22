@@ -28,6 +28,7 @@ It creates the following files: <br>
 Use this code to make an HR-diagram for the Sun (luminosity against temperature) during its stellar evolution.
 
 <h3> sun_visualisation.py </h3>
+
 Use this code to visualise the temperature, luminosity, mass, radius or evolving age of the Sun. 
 
 <h3> visualisation.py </h3>
