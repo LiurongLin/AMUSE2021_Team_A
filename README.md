@@ -1,7 +1,7 @@
 # AMUSE2021_Team_A
 
 The following folders contain the ".csv" file of the eccentricity along time and ".amuse" files of the final stage of the core and gas particles of the Sun.<br>
-- t_end={}_n={}_{}, where the last {} represents the final stage of the stellar evolution code, which is: <br>
+- t_end={}_n={}\_{}, where the last {} represents the final stage of the stellar evolution code, which is: <br>
   - 12Gyr: initally evolve the Sun to the age of 12 Gyr <br>
   - 12Gyr_moon: initally evolve the Sun to the age of 12 Gyr with moon in the gravity system <br>
   - 12.05Gyr: initally evolve the Sun to the age of 12.05 Gyr <br>
