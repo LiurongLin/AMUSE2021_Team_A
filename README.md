@@ -53,8 +53,8 @@ The following folders contain the ".csv" file of the eccentricity along time and
   - 0.9AU_no_friction: initally evolve the Sun to have a radius of 0.9 AU and neglect the friction caused by the envelope of the Sun <br>
 
 <h3> plot_eccentricity_vs_t.ipynb </h3>
-Use this code to make the eccentricity against time plots
+Use this code to make the eccentricity against time plots.
 
 
-<h3> coordinates_plot.ipynb <\h3>
- Use this code to make the trajectory of the earth after we add it into the solar system
+<h3> coordinates_plot.ipynb </h3>
+Use this code to make the trajectory of the earth after we add it into the solar system.
