@@ -45,6 +45,8 @@ This is the code that contains only the stellar evolution code. So the code to e
 <h2> Results </h2>
 core_particle.amuse and gas_particles.amuse are an example of resulting particle sets. They can be used to test the visualisation code with. <br>
 <br>
+The folder scatter_coordinates_plots contains a few plots of the coordinates for different runs (specified in their name). <br>
+<br>
 The following folders contain the results of specific runs:<br>
 - t_end={}_n={}_z={} contain the result of a normal run with the parameters given in the name of the folder. <br>
 - t_end={}_n={}_z={}_e0 same as the above, except that there is an extra condition in the while loop of the stellar evolution. The conditions here are that it should evolve to at least 12 Gyr and in addition, the Sun's radius should correspond to 0.9 au. <br>
