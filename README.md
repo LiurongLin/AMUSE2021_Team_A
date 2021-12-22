@@ -1,16 +1,16 @@
 # AMUSE2021_Team_A
 
-Plan
-- Evolve star to Red Giant (figure out how long we should evolve it)
-- Make a hydroblob (figure out how to do that with particles smaller than 1MEarth)
-- Add the Earth to the system
-- (Add Moon if it works)
+The following folders contain the ".csv" file of the eccentricity along time and ".amuse" files of the final stage of the core and gas particles of the Sun.<br>
+- t_end={}_n={}_{}, where the last {} represents the final stage of the stellar evolution code, which is: <br>
+  - 12Gyr: initally evolve the Sun to the age of 12 Gyr <br>
+  - 12Gyr_moon: initally evolve the Sun to the age of 12 Gyr <br>
+  - 12.05Gyr: initally evolve the Sun to the age of 12.05 Gyr <br>
+  - 0.9AU: initally evolve the Sun to have a radius of 0.9 AU <br>
+  - 0.9AU_no_friction: initally evolve the Sun to have a radius of 0.9 AU and neglect the friction caused by the envelope of the Sun <br>
+
+<h3> plot_eccentricity_vs_t.ipynb </h3>
+Use this code to make the eccentricity against time plots
 
 
-Overleaf edit link:
-https://www.overleaf.com/2154335945sqvtkvzcqsby
-
-
-Liurong's template for report
-https://www.overleaf.com/9564317765jysfnwtfpzsg
-
+<h3> coordinates_plot.ipynb </h3>
+Use this code to make the trajectory of the earth after we add it into the solar system
