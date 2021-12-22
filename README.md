@@ -42,8 +42,6 @@ The following folders contain the results of specific runs:<br>
 - t_evolve={}_t_end={}_n={}_diff_v only evolved until 12 Gyr (without extra condition), but changed the velocity corresponding with the Earth's position after the stellar evolution. <br>
 - eccentricity_vs_time contains plots of the eccentricity as a function of time for different values of t_end and n. <br>
 <br>
-More results can be found in the 'Liurong' branch. 
-
 The final results that are presented in the report are in the "Liurong" branch.
 The following folders contain the ".csv" files of the eccentricity, position of the Earth along time and ".amuse" files of the final stage of the core and gas particles of the Sun.<br>
 - t_end={}_n={}\_{}, where the last {} represents the final stage of the stellar evolution code, which are: <br>
@@ -57,7 +55,7 @@ The following folders contain the ".csv" files of the eccentricity, position of 
 Use this code to make the eccentricity against time plots.
 
 <h3> coordinates_plot.ipynb </h3>
-Use this code to make the trajectory of the earth after we add it into the solar system.
+Use this code to make the trajectory of the Earth after we add it into the solar system.
 
 <h3> eccentricity_vs_time </h3>
 Folder that saves the eccentricity against time plots.
